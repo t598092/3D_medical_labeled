@@ -1,7 +1,6 @@
 import nibabel as nib
 import numpy as np
 import json
-import argparse
 
 def validate_conversion(nii_path, yolo_format, img_shape):
     """
@@ -29,20 +28,7 @@ def validate_conversion(nii_path, yolo_format, img_shape):
     
     return [x_physical, y_physical, z_physical]
 
-def convert_to_yolo_format(nii_path, roi_center, roi_size, all_center, all_size):
-    # 讀取NIIfTI檔案
-    img = nib.load(nii_path)
-    
-    # 取得影像尺寸
-    img_shape = img.shape  # (512, 512, 341)
-    print(img_shape)
-    
-    # 方法1: 如果有affine matrix
-    # affine = img.affine
-    # 使用 numpy.linalg.inv(affine) 可以從物理座標轉回影像座標
-    
-    # 方法2: 如果有voxel spacing
-    voxel_spacing = img.header.get_zooms()
+def convert_to_yolo_format(roi_center, roi_size, all_center, all_size):
     
     # 將ROI中心點從物理座標轉換為影像座標
     roi_center_voxel = [
@@ -76,14 +62,11 @@ def convert_to_yolo_format(nii_path, roi_center, roi_size, all_center, all_size)
 
 if __name__ == "__main__":
     # 輸入
-    parser = argparse.ArgumentParser(description="Combine argparse with keyboard input.")
-    parser.add_argument("filenumber", type=str, help="The name of the file.")
-    args = parser.parse_args()
 
-    pathdir = "pid_" + args.filenumber + "/"
+    pathdir = ""
 
     # 讀取 json 檔案
-    with open(pathdir + "R_" + args.filenumber + ".json", "r") as f1, open(pathdir + "all_ROI.json", "r") as f2:
+    with open(pathdir + "ROI.json", "r") as f1, open(pathdir + "all_ROI.json", "r") as f2:
         roi_data = json.load(f1)["markups"][0]
         all_roi_data = json.load(f2)["markups"][0]
 
@@ -93,13 +76,13 @@ if __name__ == "__main__":
     all_center = all_roi_data["center"]
     all_size = all_roi_data["size"]
 
-    label = convert_to_yolo_format(pathdir + "pid_" + args.filenumber + ".nii.gz", roi_center, roi_size, all_center, all_size)
+    label = convert_to_yolo_format(roi_center, roi_size, all_center, all_size)
 
     # 列印結果
     print("Generated Label:", label)
 
     # 將標籤保存到 txt 檔案
-    output_txt_path =  pathdir + "pid_" + args.filenumber + ".txt"
+    output_txt_path =  pathdir + "ROI.txt"
     with open(output_txt_path, "w") as f:
         f.write(" ".join(map(str, label)) + "\n")
 
